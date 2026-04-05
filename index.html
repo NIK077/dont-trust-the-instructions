@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Don't Trust the Instructions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ROOT & RESET
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+:root {
+  --bg: #060b14;
+  --surface: #0d1626;
+  --surface2: #111d35;
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.18);
+  --gold: #FFD700;
+  --gold-dim: rgba(255,215,0,0.12);
+  --gold-glow: rgba(255,215,0,0.3);
+  --red: #FF3B3B;
+  --blue: #3B8BFF;
+  --green: #3BFF8B;
+  --white: #F0F4FF;
+  --muted: rgba(240,244,255,0.38);
+  --muted2: rgba(240,244,255,0.18);
+  --truth-col: #3BFF8B;
+  --lie-col: #FF3B3B;
+  --input-bg: rgba(255,255,255,0.04);
+  --input-border: rgba(255,255,255,0.1);
+  --input-focus: rgba(255,215,0,0.5);
+  --radius: 18px;
+  --radius-sm: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--white);
+  user-select: none;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   BACKGROUND LAYERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none; z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,215,0,0.04) 0%, transparent 60%),
+              radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.75) 100%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   FLASH OVERLAY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#flash { position: fixed; inset: 0; pointer-events: none; z-index: 200; opacity: 0; transition: opacity 0.06s; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SCREENS WRAPPER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#app {
+  position: relative; z-index: 10;
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 20px 16px;
+}
+
+.screen {
+  width: 100%; max-width: 400px;
+  display: flex; flex-direction: column;
+  align-items: center;
+}
+
+.hidden { display: none !important; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   AUTH SCREEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#auth-screen { gap: 24px; }
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.auth-eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px; letter-spacing: 0.5em;
+  color: var(--muted); text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.auth-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(44px, 13vw, 60px);
+  line-height: 0.9;
+  background: linear-gradient(140deg, #fff 0%, #FFD700 55%, #fff 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 28px rgba(255,215,0,0.35));
+  display: block;
+}
+
+.auth-tagline {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px; letter-spacing: 0.22em;
+  color: var(--gold); opacity: 0.65;
+  margin-top: 8px;
+}
+
+/* Auth card */
+.auth-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 24px 22px;
+  display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+
+/* Tab switcher */
+.auth-tabs {
+  display: flex; gap: 4px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px; padding: 4px;
+}
+
+.auth-tab {
+  flex: 1; padding: 10px 0;
+  border: none; background: transparent;
+  border-radius: 9px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.auth-tab.active {
+  background: var(--surface2);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Inputs */
+.auth-input-wrap { position: relative; }
+
+.auth-input-icon {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 16px; pointer-events: none; opacity: 0.4;
+}
+
+.auth-input {
+  width: 100%; padding: 14px 14px 14px 42px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  font-family: 'Space Mono', monospace;
+  font-size: 13px; color: var(--white);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-text-fill-color: var(--white);
+}
+
+.auth-input::placeholder { color: var(--muted2); font-family: 'Space Mono', monospace; }
+.auth-input:focus {
+  border-color: rgba(255,215,0,0.4);
+  box-shadow: 0 0 0 3px rgba(255,215,0,0.08);
+}
+
+/* Password toggle */
+.pass-toggle {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; color: var(--muted); padding: 4px;
+}
+
+/* Auth error */
+.auth-error {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px; color: var(--red);
+  text-align: center; min-height: 14px;
+  letter-spacing: 0.05em;
+}
+
+/* Auth primary button */
+.btn-auth-primary {
+  width: 100%; padding: 15px;
+  background: var(--gold); color: #000;
+  border: none; border-radius: var(--radius-sm);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.15s, opacity 0.2s;
+  box-shadow: 0 6px 24px rgba(255,215,0,0.3);
+  position: relative; overflow: hidden;
+}
+
+.btn-auth-primary::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.btn-auth-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 32px rgba(255,215,0,0.45); }
+.btn-auth-primary:active { transform: scale(0.97); }
+.btn-auth-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Divider */
+.auth-divider {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.auth-divider-line { flex: 1; height: 1px; background: var(--border); }
+
+.auth-divider-text {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px; letter-spacing: 0.3em;
+  color: var(--muted); text-transform: uppercase;
+}
+
+/* Guest button */
+.btn-guest {
+  width: 100%; padding: 13px;
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px; font-weight: 600; letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-transform: uppercase;
+}
+
+.btn-guest:hover { border-color: var(--border-hover); color: var(--white); background: rgba(255,255,255,0.03); }
+.btn-guest:active { transform: scale(0.98); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   START / HOME SCREEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#start-screen { gap: 22px; text-align: center; }
+
+.user-bar {
+  width: 100%; display: flex;
+  align-items: center; justify-content: space-between;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 100px; padding: 8px 8px 8px 16px;
+}
+
+.user-bar-name {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px; color: var(--muted); letter-spacing: 0.1em;
+}
+
+.user-bar-name span { color: var(--gold); font-weight: 700; }
+
+.user-bar-actions { display: flex; gap: 6px; }
+
+.icon-btn {
+  width: 32px; height: 32px; border-radius: 100px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; cursor: pointer;
+  transition: all 0.15s; color: var(--muted);
+}
+
+.icon-btn:hover { border-color: var(--border-hover); color: var(--white); background: rgba(255,255,255,0.08); }
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn.sound-off { color: var(--red); border-color: rgba(255,59,59,0.3); background: rgba(255,59,59,0.06); }
+
+.home-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(56px, 16vw, 76px);
+  line-height: 0.88;
+  background: linear-gradient(140deg, #fff 0%, #FFD700 55%, #fff 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 35px rgba(255,215,0,0.4));
+}
+
+.home-sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px; letter-spacing: 0.28em;
+  color: var(--gold); opacity: 0.65;
+}
+
+.hi-score-card {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.hi-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px; letter-spacing: 0.35em;
+  color: var(--muted); text-transform: uppercase;
+}
+
+.hi-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px; color: var(--gold);
+  line-height: 1; letter-spacing: 0.05em;
+}
+
+.how-grid {
+  width: 100%;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; padding: 18px 18px; gap: 12px;
+  display: flex; flex-direction: column;
+}
+
+.how-row {
+  display: flex; align-items: flex-start; gap: 12px; text-align: left;
+}
+
+.how-icon {
+  width: 30px; height: 30px; flex-shrink: 0;
+  border-radius: 9px; display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+
+.how-text { font-size: 13px; line-height: 1.4; color: var(--muted); padding-top: 6px; }
+.how-text strong { color: var(--white); }
+
+.btn-play {
+  width: 100%; padding: 18px;
+  background: var(--gold); color: #000;
+  border: none; border-radius: 18px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px; letter-spacing: 0.18em;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.15s;
+  box-shadow: 0 8px 32px rgba(255,215,0,0.35), 0 0 60px rgba(255,215,0,0.08);
+  position: relative; overflow: hidden;
+}
+
+.btn-play::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.28) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.btn-play:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(255,215,0,0.5); }
+.btn-play:active { transform: scale(0.97); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   GAME SCREEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#game-screen {
+  position: fixed; inset: 0; z-index: 10;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: space-between;
+  padding: 16px;
+  max-width: 480px; margin: 0 auto;
+}
+
+.game-topbar {
+  width: 100%; display: flex;
+  align-items: center; justify-content: space-between;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.score-pill {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px; letter-spacing: 0.18em; color: var(--muted);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 100px; padding: 7px 16px;
+}
+
+.score-pill .sv { color: var(--white); font-size: 15px; font-weight: 700; }
+
+.streak-pill {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px; letter-spacing: 0.08em; color: var(--gold);
+  background: var(--gold-dim); border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 100px; padding: 7px 14px;
+  opacity: 0; transition: opacity 0.3s; white-space: nowrap;
+}
+
+.streak-pill.visible { opacity: 1; }
+
+.game-sound-btn {
+  width: 36px; height: 36px; border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; cursor: pointer; color: var(--muted);
+  transition: all 0.15s;
+}
+
+.game-sound-btn.off { color: var(--red); border-color: rgba(255,59,59,0.25); }
+
+/* Instruction card */
+.inst-card {
+  width: 100%; flex: 1;
+  margin: 14px 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 26px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  padding: 28px 20px;
+  max-height: 280px;
+}
+
+.type-stripe {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: 9px 0; text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+.type-stripe.truth { background: rgba(59,255,139,0.09); color: #3BFF8B; border-bottom: 1px solid rgba(59,255,139,0.12); }
+.type-stripe.lie   { background: rgba(255,59,59,0.09);  color: #FF3B3B; border-bottom: 1px solid rgba(255,59,59,0.12); }
+.type-stripe.chaos { background: rgba(255,180,0,0.09);  color: #FFB800; border-bottom: 1px solid rgba(255,180,0,0.12); }
+
+.inst-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(38px, 11vw, 58px);
+  text-align: center; line-height: 1.1;
+  margin-top: 22px;
+  text-shadow: 0 0 40px currentColor;
+  word-break: break-word;
+}
+
+.inst-hint {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px; letter-spacing: 0.22em;
+  color: var(--muted); margin-top: 10px;
+  text-transform: uppercase; text-align: center; min-height: 14px;
+}
+
+/* Timer */
+.timer-wrap { width: 100%; margin-bottom: 2px; }
+
+.timer-track {
+  width: 100%; height: 8px;
+  background: rgba(255,255,255,0.05); border-radius: 100px;
+  overflow: hidden; border: 1px solid var(--border);
+  position: relative;
+}
+
+#timer-fill { height: 100%; width: 100%; border-radius: 100px; transition: background-color 0.4s; }
+
+.timer-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 6px;
+}
+
+.timer-sec {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px; letter-spacing: 0.2em; color: var(--muted);
+}
+
+.timer-level {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px; letter-spacing: 0.2em; color: var(--muted2);
+  text-transform: uppercase;
+}
+
+/* Buttons */
+.btns-grid {
+  width: 100%; display: grid;
+  grid-template-columns: 1fr 1fr; gap: 11px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.gbtn {
+  width: 100%; aspect-ratio: 1.65;
+  border: none; border-radius: 20px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(20px, 5.5vw, 28px);
+  letter-spacing: 0.12em; cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: transform 0.08s cubic-bezier(0.175,0.885,0.32,1.275), box-shadow 0.12s;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.gbtn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.gbtn:active { transform: scale(0.93); }
+
+.gbtn-red    { background: #B83030; box-shadow: 0 6px 20px rgba(184,48,48,0.45), inset 0 1px 0 rgba(255,255,255,0.15); color: #fff; }
+.gbtn-blue   { background: #1860B0; box-shadow: 0 6px 20px rgba(24,96,176,0.45), inset 0 1px 0 rgba(255,255,255,0.15); color: #fff; }
+.gbtn-green  { background: #1A7A40; box-shadow: 0 6px 20px rgba(26,122,64,0.45),  inset 0 1px 0 rgba(255,255,255,0.15); color: #fff; }
+.gbtn-yellow { background: #C4A00A; box-shadow: 0 6px 20px rgba(196,160,10,0.45), inset 0 1px 0 rgba(255,255,255,0.15); color: #000; }
+
+.gbtn-red:hover    { box-shadow: 0 10px 28px rgba(255,59,59,0.55); }
+.gbtn-blue:hover   { box-shadow: 0 10px 28px rgba(59,139,255,0.55); }
+.gbtn-green:hover  { box-shadow: 0 10px 28px rgba(59,255,139,0.55); }
+.gbtn-yellow:hover { box-shadow: 0 10px 28px rgba(255,215,0,0.55); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   GAME OVER SCREEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#gameover-screen { gap: 16px; }
+
+.go-skull { font-size: 50px; animation: skullPop 0.55s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+@keyframes skullPop {
+  from { transform: scale(0) rotate(-20deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.go-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 50px; letter-spacing: 0.05em; color: var(--red);
+  text-shadow: 0 0 40px rgba(255,59,59,0.45);
+  margin-bottom: -6px;
+}
+
+.go-score {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(80px, 23vw, 115px);
+  color: var(--gold); line-height: 1;
+  filter: drop-shadow(0 4px 24px rgba(255,215,0,0.4));
+}
+
+.new-record-badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px; letter-spacing: 0.25em; color: var(--gold);
+  background: var(--gold-dim); border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 100px; padding: 7px 18px;
+  animation: recPulse 1.6s infinite;
+}
+
+@keyframes recPulse { 0%,100%{ opacity:1; } 50%{ opacity:0.45; } }
+
+.go-insult {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px; line-height: 1.65; font-style: italic;
+  color: var(--muted); text-align: center; max-width: 300px;
+  padding: 14px 18px 14px 28px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; position: relative;
+}
+
+.go-insult::before {
+  content: '"';
+  font-size: 38px; font-style: normal;
+  font-family: 'Bebas Neue', sans-serif;
+  color: var(--gold); opacity: 0.22;
+  position: absolute; top: -2px; left: 8px; line-height: 1;
+}
+
+.go-stats {
+  width: 100%; display: flex; gap: 8px;
+}
+
+.stat-box {
+  flex: 1; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 14px;
+  padding: 12px 8px; text-align: center;
+}
+
+.stat-v {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px; color: var(--white); line-height: 1;
+}
+
+.stat-l {
+  font-family: 'Space Mono', monospace;
+  font-size: 8px; letter-spacing: 0.2em; color: var(--muted);
+  text-transform: uppercase; margin-top: 3px;
+}
+
+.go-btns { width: 100%; display: flex; gap: 10px; }
+
+.btn-home {
+  flex: 1; padding: 15px;
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px; letter-spacing: 0.12em;
+  cursor: pointer; transition: all 0.15s; text-transform: uppercase;
+}
+
+.btn-home:hover { border-color: var(--border-hover); color: var(--white); background: rgba(255,255,255,0.04); }
+.btn-home:active { transform: scale(0.97); }
+
+.btn-retry {
+  flex: 2; padding: 15px;
+  background: var(--gold); color: #000;
+  border: none; border-radius: 14px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: 0.15em;
+  cursor: pointer; transition: all 0.15s;
+  box-shadow: 0 6px 24px rgba(255,215,0,0.3);
+}
+
+.btn-retry:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(255,215,0,0.45); }
+.btn-retry:active { transform: scale(0.97); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   OVERLAYS: COMBO POP, LEVEL UP, TOAST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#combo-pop {
+  position: fixed; top: 28%; left: 50%; transform: translate(-50%,-50%);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px; letter-spacing: 0.05em; color: var(--gold);
+  text-shadow: 0 0 35px rgba(255,215,0,0.7);
+  pointer-events: none; z-index: 300; opacity: 0;
+}
+
+#levelup {
+  position: fixed; top: 0; left: 0; right: 0;
+  padding: 15px 0; text-align: center;
+  background: linear-gradient(90deg, transparent, rgba(255,215,0,0.14), transparent);
+  border-bottom: 1px solid rgba(255,215,0,0.25);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px; letter-spacing: 0.4em; color: var(--gold);
+  text-transform: uppercase; z-index: 400;
+  transform: translateY(-100%);
+  transition: transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+
+#levelup.show { transform: translateY(0); }
+
+#toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 100px; padding: 10px 20px;
+  font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.15em;
+  color: var(--white); white-space: nowrap;
+  z-index: 500; opacity: 0;
+  transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+  pointer-events: none;
+}
+
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ANIMATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@keyframes shake {
+  0%,100% { transform:translateX(0); }
+  15%,55%  { transform:translateX(-13px) rotate(-1deg); }
+  35%,75%  { transform:translateX(13px) rotate(1deg); }
+}
+
+@keyframes cardPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.025); }
+  100% { transform: scale(1); }
+}
+
+.shake { animation: shake 0.44s ease; }
+.card-pop { animation: cardPop 0.2s ease; }
+</style>
+</head>
+<body>
+
+<!-- Background, FX, Overlays -->
+<canvas id="particles"></canvas>
+<div id="flash"></div>
+<div id="combo-pop"></div>
+<div id="levelup">⚡ DIFFICULTY SPIKED</div>
+<div id="toast"></div>
+
+<div id="app">
+
+  <!-- ══════════════════════════════════════════
+       AUTH SCREEN
+  ══════════════════════════════════════════ -->
+  <div id="auth-screen" class="screen">
+    <div class="auth-logo">
+      <p class="auth-eyebrow">⚠ Reaction · Deception · Chaos</p>
+      <span class="auth-title">DON'T TRUST<br>THE INSTRUCTIONS</span>
+      <p class="auth-tagline">The narrator is a liar.</p>
+    </div>
+
+    <div class="auth-card">
+      <!-- Tab switcher -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
+        <button class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- Sign In form -->
+      <div id="form-signin">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">👤</span>
+            <input class="auth-input" id="si-user" type="text" placeholder="Username" autocomplete="username" spellcheck="false">
+          </div>
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">🔒</span>
+            <input class="auth-input" id="si-pass" type="password" placeholder="Password" autocomplete="current-password">
+            <button class="pass-toggle" onclick="togglePass('si-pass',this)" type="button">👁</button>
+          </div>
+          <div class="auth-error" id="si-err"></div>
+          <button class="btn-auth-primary" onclick="doSignIn()">SIGN IN</button>
+        </div>
+      </div>
+
+      <!-- Sign Up form -->
+      <div id="form-signup" class="hidden">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">👤</span>
+            <input class="auth-input" id="su-user" type="text" placeholder="Choose Username" maxlength="16" spellcheck="false">
+          </div>
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">🔒</span>
+            <input class="auth-input" id="su-pass" type="password" placeholder="Create Password" autocomplete="new-password">
+            <button class="pass-toggle" onclick="togglePass('su-pass',this)" type="button">👁</button>
+          </div>
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">✅</span>
+            <input class="auth-input" id="su-pass2" type="password" placeholder="Confirm Password" autocomplete="new-password">
+          </div>
+          <div class="auth-error" id="su-err"></div>
+          <button class="btn-auth-primary" onclick="doSignUp()">CREATE ACCOUNT</button>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="auth-divider">
+        <div class="auth-divider-line"></div>
+        <div class="auth-divider-text">or</div>
+        <div class="auth-divider-line"></div>
+      </div>
+
+      <!-- Guest -->
+      <button class="btn-guest" onclick="playAsGuest()">🎮 Play as Guest</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       HOME / START SCREEN
+  ══════════════════════════════════════════ -->
+  <div id="start-screen" class="screen hidden">
+    <!-- User bar -->
+    <div class="user-bar" style="margin-bottom:18px;">
+      <div class="user-bar-name">Playing as <span id="display-name">GUEST</span></div>
+      <div class="user-bar-actions">
+        <button class="icon-btn" id="sound-toggle-home" onclick="toggleSound()" title="Toggle Sound">🔊</button>
+        <button class="icon-btn" onclick="doLogout()" title="Logout / Change User">🚪</button>
+      </div>
+    </div>
+
+    <!-- Logo -->
+    <div class="home-logo">DON'T TRUST<br>THE INSTRUCTIONS</div>
+    <p class="home-sub" style="margin-top:6px;margin-bottom:18px;">The narrator is a liar.</p>
+
+    <!-- Hi score -->
+    <div class="hi-score-card" style="margin-bottom:4px;">
+      <div>
+        <div class="hi-label">Your Best Score</div>
+        <div class="hi-value" id="hi-display">0</div>
+      </div>
+      <div style="font-size:32px;opacity:0.4;">🏆</div>
+    </div>
+
+    <!-- How to play -->
+    <div class="how-grid" style="margin-bottom:18px;">
+      <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.4em;color:var(--muted);text-transform:uppercase;margin-bottom:2px;">How to Play</div>
+      <div class="how-row">
+        <div class="how-icon" style="background:rgba(59,255,139,0.1);color:#3BFF8B;">✓</div>
+        <p class="how-text"><strong>TRUTH</strong> — Do exactly what it says.</p>
+      </div>
+      <div class="how-row">
+        <div class="how-icon" style="background:rgba(255,59,59,0.1);color:#FF3B3B;">✗</div>
+        <p class="how-text"><strong>LIE</strong> — Do the opposite. Ignore the word.</p>
+      </div>
+      <div class="how-row">
+        <div class="how-icon" style="background:rgba(255,215,0,0.1);color:#FFD700;">⚡</div>
+        <p class="how-text"><strong>Score 5+</strong>: text color may lie too (Stroop).</p>
+      </div>
+      <div class="how-row">
+        <div class="how-icon" style="background:rgba(59,139,255,0.1);color:#3B8BFF;">🔀</div>
+        <p class="how-text"><strong>Score 10+</strong>: buttons shuffle every round.</p>
+      </div>
+    </div>
+
+    <button class="btn-play" onclick="startGame()">▶ START GAME</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       GAME SCREEN
+  ══════════════════════════════════════════ -->
+  <div id="game-screen" class="hidden">
+    <div class="game-topbar">
+      <div class="score-pill">SCORE <span class="sv" id="score-val">0</span></div>
+      <div class="streak-pill" id="streak-pill">🔥 <span id="streak-val">0</span> STREAK</div>
+      <button class="game-sound-btn" id="sound-toggle-game" onclick="toggleSound()">🔊</button>
+    </div>
+
+    <div class="inst-card" id="inst-card">
+      <div class="type-stripe" id="type-stripe"></div>
+      <div class="inst-text"  id="inst-text"></div>
+      <div class="inst-hint"  id="inst-hint"></div>
+    </div>
+
+    <div class="timer-wrap">
+      <div class="timer-track"><div id="timer-fill"></div></div>
+      <div class="timer-row">
+        <div class="timer-sec" id="timer-sec">5.0s</div>
+        <div class="timer-level" id="timer-level">Level 1</div>
+      </div>
+    </div>
+
+    <div class="btns-grid" id="btns-grid"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       GAME OVER SCREEN
+  ══════════════════════════════════════════ -->
+  <div id="gameover-screen" class="screen hidden">
+    <div class="go-skull">💀</div>
+    <div class="go-title">GAME OVER</div>
+    <div class="go-score" id="go-score-val">0</div>
+    <div class="new-record-badge hidden" id="rec-badge">🏆 NEW RECORD!</div>
+    <div class="go-insult" id="go-insult-text"></div>
+    <div class="go-stats">
+      <div class="stat-box"><div class="stat-v" id="s-best">0</div><div class="stat-l">Best</div></div>
+      <div class="stat-box"><div class="stat-v" id="s-streak">0</div><div class="stat-l">Streak</div></div>
+      <div class="stat-box"><div class="stat-v" id="s-rounds">0</div><div class="stat-l">Rounds</div></div>
+    </div>
+    <div class="go-btns" style="width:100%;">
+      <button class="btn-home" onclick="goHome()">🏠 HOME</button>
+      <button class="btn-retry" onclick="startGame()">↺ RETRY</button>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+'use strict';
+/* ════════════════════════════════════════════════════════════
+   PARTICLES
+════════════════════════════════════════════════════════════ */
+(function(){
+  const c = document.getElementById('particles');
+  const x = c.getContext('2d');
+  let W,H,stars=[];
+  function resize(){ W=c.width=innerWidth; H=c.height=innerHeight; }
+  resize(); addEventListener('resize',()=>{ resize(); init(); });
+  function init(){
+    stars = Array.from({length:90},()=>({
+      x:Math.random()*W, y:Math.random()*H,
+      r:Math.random()*1.3+0.2,
+      a:Math.random()*Math.PI*2,
+      s:Math.random()*0.28+0.04,
+      d:(Math.random()-0.5)*0.08
+    }));
+  }
+  init();
+  function loop(){
+    x.clearRect(0,0,W,H);
+    stars.forEach(s=>{
+      s.a+=s.s*0.01; s.x+=s.d;
+      if(s.x<0)s.x=W; if(s.x>W)s.x=0;
+      const alpha=(Math.sin(s.a)*0.5+0.5)*0.45+0.04;
+      x.beginPath(); x.arc(s.x,s.y,s.r,0,Math.PI*2);
+      x.fillStyle=`rgba(200,220,255,${alpha})`; x.fill();
+    });
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ════════════════════════════════════════════════════════════
+   WEB AUDIO
+════════════════════════════════════════════════════════════ */
+let soundEnabled = true;
+const SFX = (function(){
+  let ctx=null;
+  function ac(){ if(!ctx) ctx=new(window.AudioContext||window.webkitAudioContext)(); return ctx; }
+  function tone(f,d,type='sine',g=0.25){
+    if(!soundEnabled) return;
+    try{
+      const a=ac(), o=a.createOscillator(), gn=a.createGain();
+      o.type=type; o.frequency.setValueAtTime(f,a.currentTime);
+      gn.gain.setValueAtTime(g,a.currentTime);
+      gn.gain.exponentialRampToValueAtTime(0.001,a.currentTime+d);
+      o.connect(gn); gn.connect(a.destination);
+      o.start(); o.stop(a.currentTime+d);
+    }catch(e){}
+  }
+  return {
+    ok(){ tone(700,0.06,'square',0.16); setTimeout(()=>tone(900,0.07,'square',0.13),55); },
+    fail(){ tone(180,0.45,'sawtooth',0.28); setTimeout(()=>tone(110,0.55,'sawtooth',0.22),160); },
+    tick(){ tone(420,0.04,'sine',0.07); },
+    urgent(){ tone(330,0.06,'square',0.11); },
+    levelUp(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.14,'sine',0.14),i*75)); },
+    combo(){ tone(1046,0.09,'sine',0.18); setTimeout(()=>tone(1318,0.14,'sine',0.15),75); },
+    login(){ [440,550,660].forEach((f,i)=>setTimeout(()=>tone(f,0.1,'sine',0.12),i*60)); }
+  };
+})();
+
+/* ════════════════════════════════════════════════════════════
+   INSULTS — 75 lines
+════════════════════════════════════════════════════════════ */
+const INSULTS = [
+  "My grandma moves faster — and she's a marble statue.",
+  "I've seen glaciers with better reaction time.",
+  "Your thumbs filed a restraining order against your brain.",
+  "A sloth clocked you as 'impressively slow.'",
+  "By the time you reacted, the dinosaurs went extinct — again.",
+  "Even a buffering YouTube video has better response time.",
+  "You reacted so late the answer changed generations.",
+  "A rock just called. It said you're giving it competition.",
+  "Somewhere, a turtle is laughing at you.",
+  "Your reflexes went to get milk and never came back.",
+  "Error 404: Brain not found.",
+  "Congratulations — you've found the floor of intelligence.",
+  "The instructions said DON'T. You did. Truly inspirational.",
+  "A golden retriever would've nailed that. Just saying.",
+  "Instructions are just suggestions to you, aren't they?",
+  "I've seen more cognitive function in a screensaver.",
+  "You'd fail a 'which way is up' quiz.",
+  "Your thought process is running on dial-up.",
+  "Did you even read the screen, or just vibe at it?",
+  "A coin flip would've done better. Seriously.",
+  "Touch grass. Maybe nature will teach you buttons.",
+  "Your ancestors survived ice ages. And then there's you.",
+  "I'm not saying you're bad, but… actually yes I am.",
+  "Somewhere, your WiFi router is embarrassed for you.",
+  "If failure were an Olympic sport, you'd finally medal.",
+  "The good news: you can't do worse. The bad news: you will.",
+  "You pressed the wrong button with such confidence. Respect.",
+  "Your phone deserves a better owner.",
+  "Science is genuinely baffled by how you hold a fork.",
+  "I've seen better decisions made at 3am with no sleep.",
+  "What is a button, really, if not a friend you betrayed?",
+  "You were this close to greatness. 'This close' being 'not at all.'",
+  "The path to redemption begins with reading. Try it.",
+  "In another timeline, you got it right. Not this one.",
+  "Was it the color? The word? Or just pure chaos?",
+  "Deep down, did you mean to fail? Deep down, yes.",
+  "Some achieve greatness. You pressed the wrong button.",
+  "If at first you don't succeed — maybe this game isn't for you.",
+  "Perhaps next time, consciousness will participate.",
+  "You have successfully completed Tutorial Zero: failing.",
+  "The word said RED. Your hand said ADVENTURE.",
+  "Instructions were: don't press that. Guess what you did.",
+  "The timer was 5 seconds. You needed 6. Classic.",
+  "That wasn't even a hard one. That's the tutorial level.",
+  "If confusion were currency, you'd be a billionaire.",
+  "Your brain buffered and autocorrected to the wrong answer.",
+  "Bold strategy: ignore all cues, mash randomly. Didn't pan out.",
+  "You treated TRUTH like a personal attack. Fair, but wrong.",
+  "The LIE indicator is not ironic. It's literal. Oof.",
+  "Your fingers have departed from your nervous system.",
+  "Somewhere, a traffic light is judging you.",
+  "My loading spinner has better focus than you.",
+  "Even autocorrect would've gotten that right.",
+  "You just lost to a color. A single color.",
+  "The button didn't move. Your hand just went rogue.",
+  "You were betrayed by your own index finger. Tragic.",
+  "I asked for a player and got a performance artist.",
+  "You didn't lose. The game just refused to include you in the win.",
+  "A magic 8-ball would've outscored you. It has 20 options.",
+  "Your thumbs work in mysterious, deeply wrong ways.",
+  "Next time try using your brain — novel concept, I know.",
+  "Pro tip: read the badge at the top. It tells you everything.",
+  "The signal traveled from eyes to fingers and got lost en route.",
+  "The narrator is a liar — but you're the one who lost.",
+  "A houseplant would've made a better guess.",
+  "You have the decision speed of a government committee.",
+  "Technically you read the instruction perfectly. Then ignored it.",
+  "Your strategy of 'press it and see' was deeply flawed.",
+  "Well, chaos alone can't win here. Noted.",
+  "Not everyone was born to play this. Some were born to try twice.",
+  "The buttons were stationary. Just pointing that out.",
+  "The speed of light is fast. Your reaction was not.",
+  "Your thumbs seem to be running their own agenda.",
+  "Intelligence test result: 'Please re-seat the CPU.'",
+  "Even the wrong button looked surprised you pressed it.",
+];
+
+/* ════════════════════════════════════════════════════════════
+   AUTH / USER SYSTEM (localStorage-based)
+════════════════════════════════════════════════════════════ */
+const DB_KEY = 'dtti_users';
+const SESSION_KEY = 'dtti_session';
+
+function getUsers(){ return JSON.parse(localStorage.getItem(DB_KEY)||'{}'); }
+function saveUsers(u){ localStorage.setItem(DB_KEY, JSON.stringify(u)); }
+function getSession(){ return JSON.parse(localStorage.getItem(SESSION_KEY)||'null'); }
+function saveSession(s){ localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+
+function getHiScore(username){
+  if(!username||username==='GUEST') return parseInt(localStorage.getItem('dtti_hi_guest')||'0');
+  const u=getUsers(); return u[username]?.hi||0;
+}
+
+function saveHiScore(username,score){
+  if(!username||username==='GUEST'){
+    const prev=parseInt(localStorage.getItem('dtti_hi_guest')||'0');
+    if(score>prev) localStorage.setItem('dtti_hi_guest',score);
+    return;
+  }
+  const u=getUsers();
+  if(!u[username]) u[username]={pw:'',hi:0};
+  if(score>u[username].hi){ u[username].hi=score; saveUsers(u); }
+}
+
+// Simple hash (not cryptographic — for a game, sufficient)
+function hashPw(pw){
+  let h=0;
+  for(let i=0;i<pw.length;i++){ h=((h<<5)-h)+pw.charCodeAt(i); h|=0; }
+  return h.toString(16);
+}
+
+let currentUser = null; // {username, isGuest}
+
+function switchTab(tab){
+  const signin = document.getElementById('form-signin');
+  const signup = document.getElementById('form-signup');
+  const tsi = document.getElementById('tab-signin');
+  const tsu = document.getElementById('tab-signup');
+  if(tab==='signin'){
+    signin.classList.remove('hidden'); signup.classList.add('hidden');
+    tsi.classList.add('active'); tsu.classList.remove('active');
+  } else {
+    signup.classList.remove('hidden'); signin.classList.add('hidden');
+    tsu.classList.add('active'); tsi.classList.remove('active');
+  }
+}
+
+function togglePass(id, btn){
+  const inp = document.getElementById(id);
+  inp.type = inp.type==='password' ? 'text' : 'password';
+  btn.textContent = inp.type==='password' ? '👁' : '🙈';
+}
+
+function doSignIn(){
+  const u = document.getElementById('si-user').value.trim().toUpperCase();
+  const p = document.getElementById('si-pass').value;
+  const err = document.getElementById('si-err');
+  err.textContent='';
+  if(!u||!p){ err.textContent='Please fill all fields.'; return; }
+  const users=getUsers();
+  if(!users[u]){ err.textContent='User not found. Sign up first.'; return; }
+  if(users[u].pw!==hashPw(p)){ err.textContent='Wrong password. Try again.'; return; }
+  currentUser={username:u, isGuest:false};
+  saveSession(currentUser);
+  SFX.login();
+  enterHome();
+}
+
+function doSignUp(){
+  const u = document.getElementById('su-user').value.trim().toUpperCase();
+  const p = document.getElementById('su-pass').value;
+  const p2= document.getElementById('su-pass2').value;
+  const err= document.getElementById('su-err');
+  err.textContent='';
+  if(!u||!p||!p2){ err.textContent='Please fill all fields.'; return; }
+  if(u.length<3){ err.textContent='Username must be 3+ characters.'; return; }
+  if(/[^A-Z0-9_]/.test(u)){ err.textContent='Username: letters, numbers, _ only.'; return; }
+  if(p.length<4){ err.textContent='Password must be 4+ characters.'; return; }
+  if(p!==p2){ err.textContent='Passwords do not match.'; return; }
+  const users=getUsers();
+  if(users[u]){ err.textContent='Username taken. Choose another.'; return; }
+  users[u]={pw:hashPw(p), hi:0};
+  saveUsers(users);
+  currentUser={username:u, isGuest:false};
+  saveSession(currentUser);
+  SFX.login();
+  showToast('Welcome, '+u+'! 🎉');
+  enterHome();
+}
+
+function playAsGuest(){
+  currentUser={username:'GUEST', isGuest:true};
+  SFX.login();
+  enterHome();
+}
+
+function doLogout(){
+  clearSession();
+  currentUser=null;
+  showScreen('auth');
+}
+
+function goHome(){ showScreen('start'); updateHomeUI(); }
+
+/* ════════════════════════════════════════════════════════════
+   GAME CONFIG
+════════════════════════════════════════════════════════════ */
+const COLORS = ['red','blue','green','yellow'];
+const LABELS = {red:'RED',blue:'BLUE',green:'GREEN',yellow:'YELLOW'};
+const GCLS   = {red:'gbtn-red',blue:'gbtn-blue',green:'gbtn-green',yellow:'gbtn-yellow'};
+const CSTYLE = {red:'#FF5555',blue:'#5BA4FF',green:'#3BFF8B',yellow:'#FFD700'};
+
+function shuffle(a){ return [...a].sort(()=>Math.random()-0.5); }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function others(a,v){ return a.filter(c=>c!==v); }
+
+function generateRound(score){
+  const stroop = score>=5, chaos = score>=10;
+  let tl;
+  if(score<5)  tl = Math.max(4200, 5000-score*100);
+  else if(score<10) tl = Math.max(3000, 4200-(score-5)*240);
+  else if(score<20) tl = Math.max(1800, 3000-(score-10)*120);
+  else tl = Math.max(1100, 1800-(score-20)*35);
+
+  const target = pick(COLORS);
+  const textColor = stroop ? pick(COLORS) : target;
+
+  const pool = ['TRUTH','TRUTH','LIE','LIE'];
+  if(score>=3) pool.push('DONT','ONLY');
+  if(score>=8) pool.push('DONT','ONLY');
+  const type = pick(pool);
+
+  let instr, hint, valid;
+  switch(type){
+    case 'TRUTH': instr=`PRESS ${LABELS[target]}`; hint='Do exactly what it says.'; valid=[target]; break;
+    case 'LIE':   instr=`PRESS ${LABELS[target]}`; hint="The narrator lied. Don't."; valid=others(COLORS,target); break;
+    case 'DONT':  instr=`DON'T PRESS ${LABELS[target]}`; hint='Avoid that color.'; valid=others(COLORS,target); break;
+    case 'ONLY':  instr=`ONLY PRESS ${LABELS[target]}`; hint='One safe color.'; valid=[target]; break;
+  }
+
+  return { type, target, textColor, instr, hint, valid,
+           buttons: chaos ? shuffle(COLORS) : COLORS, tl };
+}
+
+/* ════════════════════════════════════════════════════════════
+   GAME STATE
+════════════════════════════════════════════════════════════ */
+let score,streak,maxStreak,rounds,round,timerRAF,t0,lastLevel,usedInsults=new Set();
+
+function getLevel(s){ if(s<5)return 1; if(s<10)return 2; if(s<20)return 3; return 4; }
+
+function timerColor(frac){
+  if(frac>0.5) return 'linear-gradient(90deg,#3BFF8B,#FFD700)';
+  if(frac>0.25)return 'linear-gradient(90deg,#FFD700,#FF8800)';
+  return 'linear-gradient(90deg,#FF4444,#CC0000)';
+}
+
+function getInsult(){
+  if(usedInsults.size>=INSULTS.length) usedInsults.clear();
+  let i; do{ i=Math.floor(Math.random()*INSULTS.length); }while(usedInsults.has(i));
+  usedInsults.add(i); return INSULTS[i];
+}
+
+/* ════════════════════════════════════════════════════════════
+   DOM REFS
+════════════════════════════════════════════════════════════ */
+const $=id=>document.getElementById(id);
+
+/* ════════════════════════════════════════════════════════════
+   SCREEN MANAGEMENT
+════════════════════════════════════════════════════════════ */
+function showScreen(name){
+  ['auth-screen','start-screen','game-screen','gameover-screen']
+    .forEach(id=>$(id).classList.add('hidden'));
+  const map={auth:'auth-screen',start:'start-screen',game:'game-screen',gameover:'gameover-screen'};
+  $(map[name]).classList.remove('hidden');
+}
+
+function updateHomeUI(){
+  $('display-name').textContent = currentUser?.username||'GUEST';
+  $('hi-display').textContent = getHiScore(currentUser?.username);
+  updateSoundUI();
+}
+
+function enterHome(){
+  updateHomeUI();
+  showScreen('start');
+}
+
+/* ════════════════════════════════════════════════════════════
+   SOUND TOGGLE
+════════════════════════════════════════════════════════════ */
+function toggleSound(){
+  soundEnabled = !soundEnabled;
+  localStorage.setItem('dtti_sound', soundEnabled?'1':'0');
+  updateSoundUI();
+  showToast(soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF');
+}
+
+function updateSoundUI(){
+  const on = soundEnabled;
+  ['sound-toggle-home','sound-toggle-game'].forEach(id=>{
+    const el=$(id); if(!el) return;
+    el.textContent = on ? '🔊' : '🔇';
+    el.classList.toggle('sound-off', !on);
+    el.classList.toggle('off', !on);
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   FX HELPERS
+════════════════════════════════════════════════════════════ */
+function flash(col, a=0.18){
+  $('flash').style.background=col;
+  $('flash').style.opacity=a;
+  setTimeout(()=>{ $('flash').style.opacity=0; },130);
+}
+
+function shakeScreen(){
+  document.body.classList.remove('shake');
+  void document.body.offsetWidth;
+  document.body.classList.add('shake');
+  setTimeout(()=>document.body.classList.remove('shake'),500);
+}
+
+function showCombo(text){
+  const el=$('combo-pop');
+  el.textContent=text;
+  el.style.transition='none';
+  el.style.opacity='1';
+  el.style.transform='translate(-50%,-60%) scale(1)';
+  setTimeout(()=>{
+    el.style.transition='transform 0.6s ease, opacity 0.6s ease';
+    el.style.opacity='0';
+    el.style.transform='translate(-50%,-110%) scale(1.35)';
+  },100);
+}
+
+let toastTimer;
+function showToast(msg){
+  const el=$('toast');
+  clearTimeout(toastTimer);
+  el.textContent=msg;
+  el.classList.add('show');
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+function showLevelUp(){
+  const el=$('levelup');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2100);
+}
+
+/* ════════════════════════════════════════════════════════════
+   GAME LOOP
+════════════════════════════════════════════════════════════ */
+function startGame(){
+  score=0; streak=0; maxStreak=0; rounds=0; lastLevel=1;
+  showScreen('game');
+  nextRound();
+}
+
+function buildButtons(colors){
+  const g=$('btns-grid'); g.innerHTML='';
+  colors.forEach(c=>{
+    const b=document.createElement('button');
+    b.className=`gbtn ${GCLS[c]}`;
+    b.textContent=LABELS[c];
+    b.addEventListener('click',()=>onPress(c));
+    g.appendChild(b);
+  });
+}
+
+function nextRound(){
+  round=generateRound(score); rounds++;
+  const lv=getLevel(score);
+  if(lv>lastLevel){ lastLevel=lv; showLevelUp(); SFX.levelUp(); }
+
+  // Stripe
+  const stripe=$('type-stripe');
+  const isLie=round.type==='LIE'||round.type==='DONT';
+  stripe.textContent = {TRUTH:'✓ TRUTH',LIE:'⚡ LIE',DONT:'🚫 AVOID',ONLY:'☝ ONLY'}[round.type];
+  stripe.className = 'type-stripe '+(isLie?'lie':'truth');
+
+  $('inst-text').textContent=round.instr;
+  $('inst-text').style.color=CSTYLE[round.textColor];
+  $('inst-hint').textContent=score>=1?round.hint:'';
+
+  // Card pop
+  const card=$('inst-card');
+  card.classList.remove('card-pop');
+  void card.offsetWidth;
+  card.classList.add('card-pop');
+
+  $('score-val').textContent=score;
+  $('streak-val').textContent=streak;
+  $('streak-pill').classList.toggle('visible',streak>=3);
+  $('timer-level').textContent=`Level ${lv}`;
+
+  buildButtons(round.buttons);
+  startTimer();
+}
+
+function startTimer(){
+  if(timerRAF) cancelAnimationFrame(timerRAF);
+  t0=Date.now();
+  let did2=false,did1=false;
+  function loop(){
+    const rem=Math.max(0,round.tl-(Date.now()-t0));
+    const frac=rem/round.tl;
+    $('timer-fill').style.width=(frac*100)+'%';
+    $('timer-fill').style.background=timerColor(frac);
+    $('timer-sec').textContent=(rem/1000).toFixed(1)+'s';
+    if(rem<=2000&&!did2){ did2=true; SFX.tick(); }
+    if(rem<=1000&&!did1){ did1=true; SFX.urgent(); }
+    if(rem<=0){ gameOver('timeout'); return; }
+    timerRAF=requestAnimationFrame(loop);
+  }
+  timerRAF=requestAnimationFrame(loop);
+}
+
+function stopTimer(){ if(timerRAF){ cancelAnimationFrame(timerRAF); timerRAF=null; } }
+
+function onPress(color){
+  if(!round) return;
+  stopTimer();
+  if(round.valid.includes(color)){
+    score++; streak++; if(streak>maxStreak) maxStreak=streak;
+    SFX.ok(); flash('#3BFF8B',0.11);
+    if(streak===5)  { showCombo('5 COMBO! 🔥'); SFX.combo(); }
+    if(streak===10) { showCombo('10 STREAK! ⚡'); SFX.combo(); }
+    if(streak===15) { showCombo('15!!! 🎯'); SFX.combo(); }
+    if(streak>0&&streak%20===0){ showCombo(`${streak}!! 💀`); SFX.combo(); }
+    nextRound();
+  } else {
+    gameOver('wrong');
+  }
+}
+
+function gameOver(reason){
+  stopTimer(); streak=0;
+  SFX.fail(); flash('#FF3B3B',0.22); shakeScreen();
+  saveHiScore(currentUser?.username, score);
+  const hi=getHiScore(currentUser?.username);
+  const isNew=score>0&&score>=hi;
+  $('go-score-val').textContent=score;
+  $('go-insult-text').textContent=getInsult();
+  $('rec-badge').classList.toggle('hidden',!isNew);
+  $('s-best').textContent=hi;
+  $('s-streak').textContent=maxStreak;
+  $('s-rounds').textContent=rounds;
+  setTimeout(()=>showScreen('gameover'),220);
+}
+
+/* ════════════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════════════ */
+soundEnabled = localStorage.getItem('dtti_sound')!=='0';
+
+// Check saved session
+const saved = getSession();
+if(saved){
+  currentUser = saved;
+  enterHome();
+} else {
+  showScreen('auth');
+}
+</script>
+</body>
+</html>
