@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capacitor Deployment Guide — Don't Trust the Instructions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #161b27;
+    --surface2: #1e2535;
+    --border: #2a3348;
+    --gold: #f59e0b;
+    --blue: #3b82f6;
+    --green: #10b981;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code-bg: #0d1117;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── LAYOUT ── */
+  .wrap { max-width: 860px; margin: 0 auto; padding: 48px 32px; }
+
+  /* ── HEADER ── */
+  .doc-header {
+    background: linear-gradient(135deg, #0f1117 0%, #1a1040 50%, #0f1117 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px;
+    margin-bottom: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .doc-header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 70% 50%, rgba(245,158,11,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .doc-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25);
+    color: var(--gold);
+    border-radius: 100px; padding: 5px 14px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 20px;
+  }
+
+  .doc-title {
+    font-size: 36px; font-weight: 700;
+    background: linear-gradient(135deg, #fff 0%, var(--gold) 60%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px; line-height: 1.2;
+  }
+
+  .doc-sub { color: var(--muted); font-size: 15px; max-width: 560px; }
+
+  .doc-meta {
+    display: flex; gap: 24px; margin-top: 28px; flex-wrap: wrap;
+  }
+
+  .meta-chip {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--muted); font-size: 13px;
+  }
+
+  .meta-chip span { color: var(--text); font-weight: 500; }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px 32px; margin-bottom: 48px;
+  }
+
+  .toc-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 18px;
+  }
+
+  .toc-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+  .toc-item a {
+    color: var(--text); text-decoration: none;
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0; border-bottom: 1px solid transparent;
+    transition: color 0.15s;
+    font-size: 14px;
+  }
+
+  .toc-item a:hover { color: var(--gold); }
+
+  .toc-num {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 2px 8px;
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--gold); font-weight: 600; flex-shrink: 0;
+  }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 56px; }
+
+  .section-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px; font-weight: 700; flex-shrink: 0;
+  }
+
+  .section-title { font-size: 22px; font-weight: 700; }
+
+  .section-sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  /* ── ALERT BOXES ── */
+  .alert {
+    border-radius: 12px; padding: 16px 20px;
+    margin: 20px 0; display: flex; gap: 14px;
+    border: 1px solid;
+  }
+
+  .alert-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .alert-body { flex: 1; }
+  .alert-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .alert-text { font-size: 13px; line-height: 1.6; }
+
+  .alert-warn  { background: rgba(245,158,11,0.07); border-color: rgba(245,158,11,0.25); }
+  .alert-warn .alert-title  { color: var(--gold); }
+  .alert-info  { background: rgba(59,130,246,0.07); border-color: rgba(59,130,246,0.25); }
+  .alert-info .alert-title  { color: var(--blue); }
+  .alert-ok    { background: rgba(16,185,129,0.07); border-color: rgba(16,185,129,0.25); }
+  .alert-ok .alert-title    { color: var(--green); }
+  .alert-crit  { background: rgba(239,68,68,0.07);  border-color: rgba(239,68,68,0.25); }
+  .alert-crit .alert-title  { color: var(--red); }
+
+  /* ── STEPS ── */
+  .steps { display: flex; flex-direction: column; gap: 24px; }
+
+  .step {
+    display: flex; gap: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px 22px;
+    position: relative;
+  }
+
+  .step-num {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .step-content { flex: 1; }
+  .step-title { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+  .step-body  { color: var(--muted); font-size: 14px; line-height: 1.65; }
+
+  /* ── CODE BLOCKS ── */
+  .code-block {
+    margin: 14px 0;
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+
+  .code-header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 8px 16px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--muted); font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  .code-label {
+    font-size: 11px; color: var(--muted);
+  }
+
+  pre {
+    padding: 18px 20px; overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.7; color: var(--text);
+    white-space: pre;
+  }
+
+  code { font-family: 'JetBrains Mono', monospace; }
+
+  .inline-code {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 5px; padding: 1px 7px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px; color: #93c5fd;
+  }
+
+  /* Token colors */
+  .kw  { color: #c084fc; }  /* keyword */
+  .str { color: #86efac; }  /* string */
+  .cm  { color: #475569; }  /* comment */
+  .fn  { color: #60a5fa; }  /* function */
+  .nm  { color: #fbbf24; }  /* number */
+  .op  { color: #94a3b8; }  /* operator */
+  .hl  { color: #f0f4ff; }  /* highlight */
+
+  /* ── CHECKLIST ── */
+  .checklist { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+
+  .check-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px;
+  }
+
+  .check-box {
+    width: 20px; height: 20px; border-radius: 5px;
+    border: 2px solid var(--border); flex-shrink: 0; margin-top: 1px;
+  }
+
+  .check-text { font-size: 14px; color: var(--text); line-height: 1.5; }
+  .check-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ── COMPARISON TABLE ── */
+  table {
+    width: 100%; border-collapse: collapse;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+    margin: 16px 0; font-size: 14px;
+  }
+
+  th {
+    background: var(--surface2); padding: 12px 16px;
+    text-align: left; font-weight: 600; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+
+  td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+
+  .tag-green { background: rgba(16,185,129,0.15); color: #34d399; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+  .tag-red   { background: rgba(239,68,68,0.15);  color: #f87171; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+  .tag-gold  { background: rgba(245,158,11,0.15); color: #fbbf24; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+
+  /* ── GRID CARDS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+
+  @media(max-width:600px){ .grid-2{ grid-template-columns:1fr; } }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px;
+  }
+
+  .card-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .card-body  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ── PHASE BADGE ── */
+  .phase {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 100px; padding: 4px 12px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+
+  .phase-android { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25); color: #34d399; }
+  .phase-ios     { background: rgba(59,130,246,0.12);  border: 1px solid rgba(59,130,246,0.25);  color: #60a5fa; }
+  .phase-both    { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.25); color: #a78bfa; }
+
+  p { margin-bottom: 12px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+  p strong { color: var(--text); }
+
+  h3 { font-size: 16px; font-weight: 600; color: var(--text); margin: 24px 0 12px; }
+  h4 { font-size: 14px; font-weight: 600; color: var(--text); margin: 18px 0 8px; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  /* ── FOOTER ── */
+  .doc-footer {
+    text-align: center; padding: 32px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; margin-top: 48px;
+  }
+
+  .doc-footer p { color: var(--muted); font-size: 13px; margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ═══ HEADER ═══ -->
+<div class="doc-header">
+  <div class="doc-badge">📱 Full Deployment Guide</div>
+  <h1 class="doc-title">Publishing "Don't Trust the<br>Instructions" to App Stores</h1>
+  <p class="doc-sub">A complete, step-by-step guide to converting your HTML5 game into a native Android and iOS app using Capacitor, then submitting to Google Play Store and Apple App Store.</p>
+  <div class="doc-meta">
+    <div class="meta-chip">🛠 Tool: <span>Capacitor 6</span></div>
+    <div class="meta-chip">🤖 Android: <span>Play Store (AAB)</span></div>
+    <div class="meta-chip">🍎 iOS: <span>App Store (Xcode)</span></div>
+    <div class="meta-chip">⏱ Est. time: <span>3–5 hours</span></div>
+  </div>
+</div>
+
+<!-- ═══ TABLE OF CONTENTS ═══ -->
+<div class="toc">
+  <p class="toc-title">📋 Table of Contents</p>
+  <ul class="toc-list">
+    <li class="toc-item"><a href="#s1"><span class="toc-num">01</span> Why Capacitor? (vs Cordova)</a></li>
+    <li class="toc-item"><a href="#s2"><span class="toc-num">02</span> Prerequisites & System Setup</a></li>
+    <li class="toc-item"><a href="#s3"><span class="toc-num">03</span> Project Setup & Wrapping Your Game</a></li>
+    <li class="toc-item"><a href="#s4"><span class="toc-num">04</span> App Configuration & Assets</a></li>
+    <li class="toc-item"><a href="#s5"><span class="toc-num">05</span> Building for Android (AAB)</a></li>
+    <li class="toc-item"><a href="#s6"><span class="toc-num">06</span> Google Play Store Submission</a></li>
+    <li class="toc-item"><a href="#s7"><span class="toc-num">07</span> Building for iOS (IPA)</a></li>
+    <li class="toc-item"><a href="#s8"><span class="toc-num">08</span> Apple App Store Submission</a></li>
+    <li class="toc-item"><a href="#s9"><span class="toc-num">09</span> Post-Launch & Updates</a></li>
+    <li class="toc-item"><a href="#s10"><span class="toc-num">10</span> Troubleshooting</a></li>
+  </ul>
+</div>
+
+<!-- ═══ SECTION 1 ═══ -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(245,158,11,0.12);color:var(--gold);">01</div>
+    <div>
+      <div class="section-title">Why Capacitor? (vs Cordova)</div>
+      <div class="section-sub">Choosing the right bridge framework</div>
+    </div>
+  </div>
+
+  <p>Both Capacitor and Apache Cordova wrap your HTML/JS game in a native WebView. However, Capacitor is the modern successor and strongly recommended for new projects.</p>
+
+  <table>
+    <thead>
+      <tr><th>Feature</th><th>Capacitor</th><th>Cordova</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Maintained by</td><td><span class="tag-green">Ionic Team (active)</span></td><td><span class="tag-red">Apache (slow updates)</span></td></tr>
+      <tr><td>Native project structure</td><td><span class="tag-green">Full native projects</span></td><td><span class="tag-gold">Hidden, abstracted</span></td></tr>
+      <tr><td>Android Studio / Xcode integration</td><td><span class="tag-green">Full, direct</span></td><td><span class="tag-red">Limited</span></td></tr>
+      <tr><td>Plugin ecosystem</td><td><span class="tag-green">Modern, actively updated</span></td><td><span class="tag-gold">Large but aging</span></td></tr>
+      <tr><td>Single-file HTML apps</td><td><span class="tag-green">✓ Perfect fit</span></td><td><span class="tag-green">✓ Works</span></td></tr>
+      <tr><td>App Store approval compatibility</td><td><span class="tag-green">Excellent</span></td><td><span class="tag-gold">Good</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-ok">
+    <div class="alert-icon">✅</div>
+    <div class="alert-body">
+      <div class="alert-title">Verdict: Use Capacitor</div>
+      <div class="alert-text">This entire guide uses Capacitor. It produces real Android Studio and Xcode projects, giving you full control and the best compatibility with modern store requirements.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 2 ═══ -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(59,130,246,0.12);color:var(--blue);">02</div>
+    <div>
+      <div class="section-title">Prerequisites & System Setup</div>
+      <div class="section-sub">Install everything you need before starting</div>
+    </div>
+  </div>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">
+      <div class="alert-title">Platform Requirement</div>
+      <div class="alert-text">iOS builds <strong>require a Mac with Xcode</strong>. Android builds work on Windows, Mac, or Linux. If you only have Windows, you can still build for Android today and handle iOS later on a Mac.</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🤖 For Android</div>
+      <div class="card-body">
+        Node.js 18+<br>
+        Java JDK 17+<br>
+        Android Studio (latest)<br>
+        Android SDK (API 33+)<br>
+        npm or yarn
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🍎 For iOS</div>
+      <div class="card-body">
+        macOS 13+ (Ventura or later)<br>
+        Xcode 15+<br>
+        CocoaPods<br>
+        Apple Developer Account ($99/yr)<br>
+        Node.js 18+
+      </div>
+    </div>
+  </div>
+
+  <h3>Step-by-step System Setup</h3>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">1</div>
+      <div class="step-content">
+        <div class="step-title">Install Node.js</div>
+        <div class="step-body">Download from <strong>nodejs.org</strong> — install the LTS version (18 or 20). Verify after install:</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="fn">node</span> --version   <span class="cm"># Should show v18 or higher</span>
+<span class="fn">npm</span> --version    <span class="cm"># Should show 9 or higher</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">2</div>
+      <div class="step-content">
+        <div class="step-title">Install Android Studio (for Android builds)</div>
+        <div class="step-body">Download from <strong>developer.android.com/studio</strong>. During installation, ensure these SDK components are selected:</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">text</span><span class="code-label">Android Studio SDK Manager → SDK Platforms</span></div>
+          <pre><span class="hl">✓ Android 13 (API 33) or higher
+✓ Android SDK Build-Tools 33+
+✓ Android SDK Platform-Tools
+✓ Android Emulator (for testing)</span></pre>
+        </div>
+        <div class="step-body" style="margin-top:10px;">Then set the environment variable so Capacitor can find your SDK:</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span><span class="code-label">macOS / Linux: add to ~/.zshrc or ~/.bashrc</span></div>
+          <pre><span class="kw">export</span> ANDROID_SDK_ROOT=<span class="str">"$HOME/Library/Android/sdk"</span>  <span class="cm"># macOS</span>
+<span class="kw">export</span> ANDROID_SDK_ROOT=<span class="str">"/home/user/Android/Sdk"</span>      <span class="cm"># Linux</span>
+<span class="kw">export</span> PATH=<span class="str">"$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools"</span></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">powershell</span><span class="code-label">Windows — System Environment Variables</span></div>
+          <pre>ANDROID_SDK_ROOT = <span class="str">C:\Users\YourName\AppData\Local\Android\Sdk</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">3</div>
+      <div class="step-content">
+        <div class="step-title">Install Java JDK 17 (required for Android)</div>
+        <div class="step-body">Download from <strong>adoptium.net</strong> (Eclipse Temurin, free). After install:</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="fn">java</span> --version   <span class="cm"># Should show 17 or higher</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">4</div>
+      <div class="step-content">
+        <div class="step-title">macOS only — Install Xcode & CocoaPods</div>
+        <div class="step-body">Install Xcode from the Mac App Store. Then install CocoaPods (dependency manager for iOS):</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="fn">sudo</span> gem install cocoapods
+<span class="fn">pod</span> --version    <span class="cm"># Verify install</span>
+
+<span class="cm"># Accept Xcode license (required once)</span>
+<span class="fn">sudo</span> xcodebuild -license accept</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 3 ═══ -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(139,92,246,0.12);color:var(--purple);">03</div>
+    <div>
+      <div class="section-title">Project Setup & Wrapping Your Game</div>
+      <div class="section-sub">Create the Capacitor project and add your HTML game</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:rgba(139,92,246,0.15);color:var(--purple);">1</div>
+      <div class="step-content">
+        <div class="step-title">Create Project Folder & Initialize npm</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="cm"># Create and enter project directory</span>
+<span class="fn">mkdir</span> dont-trust-instructions
+<span class="fn">cd</span> dont-trust-instructions
+
+<span class="cm"># Initialize npm project</span>
+<span class="fn">npm</span> init -y</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(139,92,246,0.15);color:var(--purple);">2</div>
+      <div class="step-content">
+        <div class="step-title">Install Capacitor</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="fn">npm</span> install @capacitor/core
+<span class="fn">npm</span> install -D @capacitor/cli
+
+<span class="cm"># Install platform packages</span>
+<span class="fn">npm</span> install @capacitor/android
+<span class="fn">npm</span> install @capacitor/ios   <span class="cm"># macOS only</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(139,92,246,0.15);color:var(--purple);">3</div>
+      <div class="step-content">
+        <div class="step-title">Create Your Web Root Folder</div>
+        <div class="step-body">Create a <span class="inline-code">www/</span> folder and place your game's HTML file inside it, renamed to <span class="inline-code">index.html</span>:</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="fn">mkdir</span> www
+
+<span class="cm"># Copy your game file in as index.html</span>
+<span class="cm"># (rename dont-trust-instructions.html → index.html)</span>
+<span class="fn">cp</span> dont-trust-instructions.html www/index.html</pre>
+        </div>
+        <div class="step-body" style="margin-top:8px;">Your folder structure should now look like:</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">text</span><span class="code-label">Project structure</span></div>
+          <pre>dont-trust-instructions/
+├── www/
+│   └── index.html        <span class="cm">← Your game</span>
+├── node_modules/
+└── package.json</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(139,92,246,0.15);color:var(--purple);">4</div>
+      <div class="step-content">
+        <div class="step-title">Initialize Capacitor</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="fn">npx</span> cap init
+
+<span class="cm"># It will ask you three questions:</span>
+<span class="cm">#  App Name:    Don't Trust the Instructions</span>
+<span class="cm">#  App ID:      com.yourdomain.donttrust   ← use your own domain</span>
+<span class="cm">#  Web dir:     www</span></pre>
+        </div>
+        <div class="alert alert-info" style="margin-top:12px;">
+          <div class="alert-icon">ℹ️</div>
+          <div class="alert-body">
+            <div class="alert-title">App ID Format</div>
+            <div class="alert-text">The App ID (e.g. <strong>com.yourname.donttrust</strong>) must be globally unique across all app stores. Use reverse domain notation. If you don't own a domain, use <strong>com.github.yourgithubname.donttrust</strong>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(139,92,246,0.15);color:var(--purple);">5</div>
+      <div class="step-content">
+        <div class="step-title">Add Platforms</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="cm"># Add Android</span>
+<span class="fn">npx</span> cap add android
+
+<span class="cm"># Add iOS (macOS only)</span>
+<span class="fn">npx</span> cap add ios</pre>
+        </div>
+        <div class="step-body" style="margin-top:8px;">This generates <span class="inline-code">android/</span> and <span class="inline-code">ios/</span> directories — full native projects you can open in Android Studio and Xcode.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(139,92,246,0.15);color:var(--purple);">6</div>
+      <div class="step-content">
+        <div class="step-title">Sync Your Game to Both Platforms</div>
+        <div class="step-body">Every time you edit your HTML game file, run this to push the changes into the native projects:</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="fn">npx</span> cap sync</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 4 ═══ -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(16,185,129,0.12);color:var(--green);">04</div>
+    <div>
+      <div class="section-title">App Configuration & Assets</div>
+      <div class="section-sub">Icons, splash screens, permissions, and capacitor.config.ts</div>
+    </div>
+  </div>
+
+  <h3>capacitor.config.json</h3>
+  <p>After <span class="inline-code">npx cap init</span>, a <span class="inline-code">capacitor.config.json</span> is created. Update it with these recommended settings for a mobile game:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">json</span><span class="code-label">capacitor.config.json</span></div>
+    <pre>{
+  <span class="str">"appId"</span>: <span class="str">"com.yourdomain.donttrust"</span>,
+  <span class="str">"appName"</span>: <span class="str">"Don't Trust the Instructions"</span>,
+  <span class="str">"webDir"</span>: <span class="str">"www"</span>,
+  <span class="str">"server"</span>: {
+    <span class="str">"androidScheme"</span>: <span class="str">"https"</span>
+  },
+  <span class="str">"android"</span>: {
+    <span class="str">"backgroundColor"</span>: <span class="str">"#060b14"</span>,
+    <span class="str">"allowMixedContent"</span>: <span class="kw">false</span>
+  },
+  <span class="str">"ios"</span>: {
+    <span class="str">"backgroundColor"</span>: <span class="str">"#060b14"</span>,
+    <span class="str">"contentInset"</span>: <span class="str">"automatic"</span>
+  },
+  <span class="str">"plugins"</span>: {
+    <span class="str">"SplashScreen"</span>: {
+      <span class="str">"launchShowDuration"</span>: <span class="nm">1500</span>,
+      <span class="str">"backgroundColor"</span>: <span class="str">"#060b14"</span>,
+      <span class="str">"showSpinner"</span>: <span class="kw">false</span>
+    }
+  }
+}</pre>
+  </div>
+
+  <h3>App Icons & Splash Screens</h3>
+  <p>You need icons in many sizes. The easiest way is using the official Capacitor Assets tool:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">bash</span></div>
+    <pre><span class="fn">npm</span> install -D @capacitor/assets
+
+<span class="cm"># Create the assets folder and drop in ONE high-res icon:</span>
+<span class="fn">mkdir</span> assets
+<span class="cm"># Place your icon.png (1024×1024px, PNG) in assets/
+# Place splash.png (2732×2732px, PNG) in assets/</span>
+
+<span class="cm"># Auto-generate all required sizes:</span>
+<span class="fn">npx</span> @capacitor/assets generate --iconBackgroundColor <span class="str">'#060b14'</span> \
+  --iconBackgroundColorDark <span class="str">'#060b14'</span> \
+  --splashBackgroundColor <span class="str">'#060b14'</span></pre>
+  </div>
+
+  <div class="alert alert-info">
+    <div class="alert-icon">🎨</div>
+    <div class="alert-body">
+      <div class="alert-title">Icon Design Tips</div>
+      <div class="alert-text">Your icon should be 1024×1024px with no transparency (App Store rejects transparent icons). Design a dark background (#060b14) with bold gold "DTTI" text or a skull emoji. Don't include rounded corners — the OS applies them.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 5 ═══ -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(16,185,129,0.12);color:var(--green);">05</div>
+    <div>
+      <div class="section-title">Building for Android (AAB)</div>
+      <div class="section-sub">Generate the Android App Bundle for Play Store submission</div>
+    </div>
+  </div>
+
+  <div class="phase phase-android">🤖 Android Phase</div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">1</div>
+      <div class="step-content">
+        <div class="step-title">Open the Android Project in Android Studio</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="fn">npx</span> cap open android
+<span class="cm"># This launches Android Studio with your project</span></pre>
+        </div>
+        <div class="step-body" style="margin-top:8px;">Android Studio will run a Gradle sync automatically. Wait for it to complete (may take a few minutes first time).</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">2</div>
+      <div class="step-content">
+        <div class="step-title">Set App Version</div>
+        <div class="step-body">In Android Studio, open <span class="inline-code">android/app/build.gradle</span> and set:</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">groovy</span><span class="code-label">android/app/build.gradle</span></div>
+          <pre>defaultConfig {
+    applicationId <span class="str">"com.yourdomain.donttrust"</span>
+    minSdkVersion <span class="nm">22</span>          <span class="cm">// Android 5.1+</span>
+    targetSdkVersion <span class="nm">34</span>
+    versionCode <span class="nm">1</span>             <span class="cm">// Increment by 1 every release</span>
+    versionName <span class="str">"1.0.0"</span>       <span class="cm">// Human-readable version</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">3</div>
+      <div class="step-content">
+        <div class="step-title">Create a Signing Keystore</div>
+        <div class="step-body">You must sign your app before uploading. <strong>Keep this keystore file safe forever — you cannot update your app without it.</strong></div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="cm"># Run this in your terminal (outside Android Studio)</span>
+<span class="fn">keytool</span> -genkey -v \
+  -keystore donttrust-release.keystore \
+  -alias donttrust \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000
+
+<span class="cm"># You'll be asked for:
+#  - Keystore password (remember this!)
+#  - Your name, organization, city, country
+#  - Key password (can be same as keystore password)</span></pre>
+        </div>
+        <div class="alert alert-crit" style="margin-top:12px;">
+          <div class="alert-icon">🔐</div>
+          <div class="alert-body">
+            <div class="alert-title">Back Up Your Keystore Immediately</div>
+            <div class="alert-text">Store <strong>donttrust-release.keystore</strong> in cloud storage, a password manager, or multiple secure locations. If you lose it, you CANNOT push updates to your existing app. Google cannot recover it for you.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">4</div>
+      <div class="step-content">
+        <div class="step-title">Configure Signing in build.gradle</div>
+        <div class="step-body">Add your keystore details to <span class="inline-code">android/app/build.gradle</span>:</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">groovy</span><span class="code-label">android/app/build.gradle — add signingConfigs block</span></div>
+          <pre>android {
+    signingConfigs {
+        release {
+            keyAlias <span class="str">"donttrust"</span>
+            keyPassword <span class="str">"YOUR_KEY_PASSWORD"</span>
+            storeFile file(<span class="str">"../../donttrust-release.keystore"</span>)
+            storePassword <span class="str">"YOUR_STORE_PASSWORD"</span>
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled <span class="kw">false</span>
+            proguardFiles getDefaultProguardFile(<span class="str">'proguard-android.txt'</span>), <span class="str">'proguard-rules.pro'</span>
+        }
+    }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">5</div>
+      <div class="step-content">
+        <div class="step-title">Build the Android App Bundle (AAB)</div>
+        <div class="step-body">In Android Studio, go to <strong>Build → Generate Signed Bundle/APK → Android App Bundle → release</strong>. Or via command line:</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="fn">cd</span> android
+<span class="fn">./gradlew</span> bundleRelease
+
+<span class="cm"># Output file location:</span>
+<span class="cm"># android/app/build/outputs/bundle/release/app-release.aab</span></pre>
+        </div>
+        <div class="step-body" style="margin-top:8px;">The <span class="inline-code">.aab</span> file is what you upload to Google Play — <strong>NOT</strong> an APK.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">6</div>
+      <div class="step-content">
+        <div class="step-title">Test on a Real Device Before Submitting</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="cm"># Connect your Android phone via USB, enable USB debugging
+# Then run:</span>
+<span class="fn">npx</span> cap run android
+
+<span class="cm"># Or build APK for sideloading (testing only, not for Play Store):</span>
+<span class="fn">./gradlew</span> assembleRelease
+<span class="cm"># Output: android/app/build/outputs/apk/release/app-release.apk</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 6 ═══ -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(16,185,129,0.12);color:var(--green);">06</div>
+    <div>
+      <div class="section-title">Google Play Store Submission</div>
+      <div class="section-sub">Setting up your developer account and submitting your AAB</div>
+    </div>
+  </div>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">💳</div>
+    <div class="alert-body">
+      <div class="alert-title">One-Time Registration Fee</div>
+      <div class="alert-text">Google Play requires a one-time $25 USD developer registration fee at <strong>play.google.com/console</strong>. Paid once, valid forever for all future apps.</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">1</div>
+      <div class="step-content">
+        <div class="step-title">Create a Google Play Developer Account</div>
+        <div class="step-body">Go to <strong>play.google.com/console</strong>, sign in with your Google account, pay the $25 fee, and complete the developer profile (name, address, contact).</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">2</div>
+      <div class="step-content">
+        <div class="step-title">Create a New App in Play Console</div>
+        <div class="step-body">Click <strong>"Create app"</strong>. Fill in: App name, Default language, App or Game (choose Game), Free or Paid.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">3</div>
+      <div class="step-content">
+        <div class="step-title">Prepare Your Store Listing</div>
+        <div class="step-body">Under <strong>Store presence → Main store listing</strong>, prepare these assets:</div>
+        <div class="checklist">
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Short description (80 chars max)</div><div class="check-sub">e.g., "A deceptive reaction game. Trust nothing. Press everything."</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Full description (4000 chars max)</div><div class="check-sub">Describe gameplay, features, difficulty scaling</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Hi-res icon (512×512 PNG)</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Feature Graphic (1024×500 PNG)</div><div class="check-sub">Banner shown at top of Play Store listing</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Screenshots (min 2, phone screenshots required)</div><div class="check-sub">At least 1080×1920px (portrait) — take real screenshots from your phone</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">4</div>
+      <div class="step-content">
+        <div class="step-title">Complete All Required Policy Sections</div>
+        <div class="step-body">Navigate through the left sidebar's checklist. Required sections include:</div>
+        <div class="checklist">
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">App content → Content rating</div><div class="check-sub">Complete the IARC questionnaire — your game is likely "Everyone" or "Everyone 10+"</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">App content → Target audience</div><div class="check-sub">Select age range (13+ is safe for this game)</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">App content → Data safety</div><div class="check-sub">Declare what data you collect. Since auth data is localStorage-only, select "No data collected from users" unless you add a backend</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Pricing & distribution</div><div class="check-sub">Select countries where your app will be available</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">5</div>
+      <div class="step-content">
+        <div class="step-title">Upload Your AAB to Internal Testing First</div>
+        <div class="step-body">Go to <strong>Testing → Internal testing → Create new release</strong>. Upload your <span class="inline-code">app-release.aab</span> file. Add testers (your own email is fine). This lets you test the full Play Store install experience before going public.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(16,185,129,0.15);color:var(--green);">6</div>
+      <div class="step-content">
+        <div class="step-title">Promote to Production</div>
+        <div class="step-body">Once testing looks good, go to <strong>Production → Create new release</strong>, upload the same AAB, write release notes, and click <strong>Review release → Start rollout to production</strong>.</div>
+        <div class="alert alert-info" style="margin-top:12px;">
+          <div class="alert-icon">⏱</div>
+          <div class="alert-body">
+            <div class="alert-title">Review Time</div>
+            <div class="alert-text">First-time submissions typically take <strong>3–7 days</strong> for Google review. Updates to existing apps usually take <strong>a few hours to 2 days</strong>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 7 ═══ -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(59,130,246,0.12);color:var(--blue);">07</div>
+    <div>
+      <div class="section-title">Building for iOS (IPA)</div>
+      <div class="section-sub">macOS + Xcode required</div>
+    </div>
+  </div>
+
+  <div class="phase phase-ios">🍎 iOS Phase — Mac Required</div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">1</div>
+      <div class="step-content">
+        <div class="step-title">Open in Xcode</div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-lang">bash</span></div>
+          <pre><span class="fn">npx</span> cap open ios
+<span class="cm"># Launches Xcode with your iOS project</span></pre>
+        </div>
+        <div class="step-body" style="margin-top:8px;">Xcode will open. Wait for it to index and resolve Swift packages.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">2</div>
+      <div class="step-content">
+        <div class="step-title">Set Bundle Identifier & Version</div>
+        <div class="step-body">In Xcode, click the <strong>App</strong> target in the left panel → <strong>General</strong> tab:</div>
+        <div class="checklist">
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Bundle Identifier: <code>com.yourdomain.donttrust</code></div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Version: <code>1.0.0</code></div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Build: <code>1</code></div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Deployment Target: iOS 14.0+</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">3</div>
+      <div class="step-content">
+        <div class="step-title">Set Up Apple Developer Account Signing</div>
+        <div class="step-body">You need a paid Apple Developer account ($99/yr at <strong>developer.apple.com</strong>). Then in Xcode:</div>
+        <div class="step-body" style="margin-top:6px;">Go to <strong>Xcode menu → Preferences → Accounts</strong> → Add your Apple ID → Select your Team. Then in the target's <strong>Signing & Capabilities</strong> tab, check <strong>Automatically manage signing</strong> and select your Team.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">4</div>
+      <div class="step-content">
+        <div class="step-title">Configure App Capabilities</div>
+        <div class="step-body">In <strong>Signing & Capabilities</strong>, your game doesn't need special capabilities (no Camera, no Push Notifications). Leave defaults. This makes App Store review faster.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">5</div>
+      <div class="step-content">
+        <div class="step-title">Test on a Real iOS Device</div>
+        <div class="step-body">Connect your iPhone, select it in the Xcode device dropdown, and hit <strong>Run (▶)</strong>. This installs the app directly on your phone for testing.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">6</div>
+      <div class="step-content">
+        <div class="step-title">Archive & Export for App Store</div>
+        <div class="step-body">In Xcode: <strong>Product → Archive</strong> (make sure target is "Any iOS Device", not a simulator). Once archiving finishes, the Organizer window opens automatically.</div>
+        <div class="step-body" style="margin-top:6px;">Click <strong>Distribute App → App Store Connect → Upload</strong>. Follow the wizard — accept all defaults. Xcode will upload your IPA to App Store Connect.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 8 ═══ -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(59,130,246,0.12);color:var(--blue);">08</div>
+    <div>
+      <div class="section-title">Apple App Store Submission</div>
+      <div class="section-sub">App Store Connect setup and review process</div>
+    </div>
+  </div>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">💳</div>
+    <div class="alert-body">
+      <div class="alert-title">Annual Fee Required</div>
+      <div class="alert-text">Apple charges <strong>$99 USD/year</strong> for the Apple Developer Program at <strong>developer.apple.com/programs</strong>. This covers all iOS, macOS, tvOS, and watchOS apps.</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">1</div>
+      <div class="step-content">
+        <div class="step-title">Create App in App Store Connect</div>
+        <div class="step-body">Go to <strong>appstoreconnect.apple.com</strong> → My Apps → <strong>+</strong> → New App. Fill in: Platform (iOS), Name, Primary Language, Bundle ID (must match Xcode), and SKU (any unique internal identifier, e.g. DTTI2024).</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">2</div>
+      <div class="step-content">
+        <div class="step-title">Prepare App Store Metadata</div>
+        <div class="checklist">
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">App name (30 chars max)</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Subtitle (30 chars max) — e.g., "A Deceptive Reaction Game"</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Description (4000 chars)</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Keywords (100 chars, comma-separated) — reaction, casual, game, brain, color, reflex</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Support URL (required — can be a simple GitHub page or Google Doc)</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Privacy Policy URL (required even for free games)</div></div></div>
+          <div class="check-item"><div class="check-box"></div><div><div class="check-text">Screenshots for iPhone (6.5" and 5.5" sizes required)</div><div class="check-sub">6.5" = 1284×2778px | 5.5" = 1242×2208px</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">3</div>
+      <div class="step-content">
+        <div class="step-title">Select Your Build</div>
+        <div class="step-body">In App Store Connect, under <strong>Build</strong>, select the build you uploaded from Xcode. It may take 15–30 minutes to appear after upload.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">4</div>
+      <div class="step-content">
+        <div class="step-title">Fill in App Privacy & Rating</div>
+        <div class="step-body">Under <strong>App Privacy</strong>, declare what data your app collects. Since user accounts use localStorage only (no server), you can declare <strong>no data collected</strong>. For Content Rating, complete the questionnaire — your game is "4+" (no objectionable content).</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(59,130,246,0.15);color:var(--blue);">5</div>
+      <div class="step-content">
+        <div class="step-title">Submit for Review</div>
+        <div class="step-body">Click <strong>Add for Review</strong>, then <strong>Submit to App Review</strong>. Optionally add review notes for Apple (not visible to users).</div>
+        <div class="alert alert-info" style="margin-top:12px;">
+          <div class="alert-icon">⏱</div>
+          <div class="alert-body">
+            <div class="alert-title">Review Time</div>
+            <div class="alert-text">Apple typically reviews apps within <strong>24–48 hours</strong>, though first submissions can take up to 7 days. You'll receive an email when approved or if there are issues.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 9 ═══ -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(245,158,11,0.12);color:var(--gold);">09</div>
+    <div>
+      <div class="section-title">Post-Launch & Pushing Updates</div>
+      <div class="section-sub">How to update your game after it's live</div>
+    </div>
+  </div>
+
+  <p>Every time you make changes to <span class="inline-code">www/index.html</span>, follow these steps to push the update:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">bash</span><span class="code-label">Standard update workflow</span></div>
+    <pre><span class="cm"># 1. Edit your game file (www/index.html)</span>
+
+<span class="cm"># 2. Sync changes to native projects</span>
+<span class="fn">npx</span> cap sync
+
+<span class="cm"># 3. Open Android Studio and increment versionCode</span>
+<span class="cm">#    versionCode 1 → 2 → 3 (must increase every Play Store upload)</span>
+
+<span class="cm"># 4. Build new AAB</span>
+<span class="fn">cd</span> android && <span class="fn">./gradlew</span> bundleRelease
+
+<span class="cm"># 5. Upload new AAB to Play Console → Production → New release</span>
+
+<span class="cm"># 6. For iOS: open Xcode, increment Build number, Archive, Upload</span></pre>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📊 Monetization Ideas</div>
+      <div class="card-body">
+        • Remove Ads IAP ($1.99)<br>
+        • Cosmetic themes (dark/neon)<br>
+        • Google AdMob banner ads<br>
+        • Rewarded ads for extra lives<br><br>
+        <em style="font-size:12px;">Add @capacitor-community/admob for ads</em>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔧 Useful Capacitor Plugins</div>
+      <div class="card-body">
+        • <strong>@capacitor/haptics</strong> — vibration feedback<br>
+        • <strong>@capacitor/game-center</strong> — iOS leaderboards<br>
+        • <strong>@capacitor/share</strong> — share score<br>
+        • <strong>@capacitor/rate-app</strong> — prompt ratings<br>
+        • <strong>@capacitor/screen-orientation</strong> — lock portrait
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 10 ═══ -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(239,68,68,0.12);color:var(--red);">10</div>
+    <div>
+      <div class="section-title">Troubleshooting</div>
+      <div class="section-sub">Common errors and how to fix them</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:rgba(239,68,68,0.15);color:var(--red);">!</div>
+      <div class="step-content">
+        <div class="step-title">"Gradle build failed" or SDK not found</div>
+        <div class="code-block"><div class="code-header"><span class="code-lang">bash</span></div>
+        <pre><span class="cm"># Verify ANDROID_SDK_ROOT is set correctly:</span>
+<span class="fn">echo</span> $ANDROID_SDK_ROOT
+
+<span class="cm"># In Android Studio → SDK Manager, accept all licenses:</span>
+<span class="fn">yes</span> | sdkmanager --licenses</pre></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(239,68,68,0.15);color:var(--red);">!</div>
+      <div class="step-content">
+        <div class="step-title">White screen / blank app on device</div>
+        <div class="step-body">Your HTML file has a reference to an external resource that can't load in the WebView. Check for:</div>
+        <div class="code-block"><div class="code-header"><span class="code-lang">bash</span></div>
+        <pre><span class="cm"># In capacitor.config.json, ensure:</span>
+<span class="str">"server"</span>: { <span class="str">"androidScheme"</span>: <span class="str">"https"</span> }
+
+<span class="cm"># Test via Chrome DevTools remote debugging:
+# 1. Connect phone, open chrome://inspect in desktop Chrome
+# 2. Click "inspect" under your app's webview</span></pre></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(239,68,68,0.15);color:var(--red);">!</div>
+      <div class="step-content">
+        <div class="step-title">Google Fonts not loading on device</div>
+        <div class="step-body">Your device might be offline or blocking the font CDN. Fix: download the fonts and bundle them inline in your HTML, or use <strong>font-display: swap</strong> with a system fallback. For production, embed fonts as base64 data URIs in the CSS to guarantee they load offline.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(239,68,68,0.15);color:var(--red);">!</div>
+      <div class="step-content">
+        <div class="step-title">iOS: "No provisioning profiles found"</div>
+        <div class="step-body">In Xcode, go to <strong>Signing & Capabilities → Team</strong>. Make sure your Apple Developer account is added in Xcode → Preferences → Accounts and the correct team is selected. Try <strong>Automatically manage signing</strong>.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(239,68,68,0.15);color:var(--red);">!</div>
+      <div class="step-content">
+        <div class="step-title">App Store rejection: "Minimum functionality"</div>
+        <div class="step-body">Apple can reject apps that seem "too simple." Strengthen your rejection appeal by ensuring your store listing clearly describes the gameplay depth, difficulty scaling, streak system, and the deception mechanic. Include a gameplay video in the review notes (not required but helps).</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num" style="background:rgba(239,68,68,0.15);color:var(--red);">!</div>
+      <div class="step-content">
+        <div class="step-title">"cap sync" not picking up changes</div>
+        <div class="code-block"><div class="code-header"><span class="code-lang">bash</span></div>
+        <pre><span class="cm"># Force a full sync:</span>
+<span class="fn">npx</span> cap sync --deployment
+
+<span class="cm"># Or copy manually:</span>
+<span class="fn">npx</span> cap copy android
+<span class="fn">npx</span> cap copy ios</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-ok" style="margin-top:24px;">
+    <div class="alert-icon">🎉</div>
+    <div class="alert-body">
+      <div class="alert-title">You're Ready to Publish!</div>
+      <div class="alert-text">Follow these steps in order and you'll have your game live on both stores. The total process from zero to published typically takes <strong>3–5 hours of work</strong> plus store review waiting time. Good luck! 🚀</div>
+    </div>
+  </div>
+</div>
+
+<div class="doc-footer">
+  <p>Don't Trust the Instructions — Deployment Guide · Built with Capacitor 6 · Last updated April 2026</p>
+  <p style="margin-top:6px;">For Capacitor docs visit <strong>capacitorjs.com</strong> · For Play Console visit <strong>play.google.com/console</strong> · For App Store Connect visit <strong>appstoreconnect.apple.com</strong></p>
+</div>
+
+</div><!-- .wrap -->
+</body>
+</html>
